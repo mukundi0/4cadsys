@@ -153,3 +153,20 @@ files before editing, and preserve user changes.
 - Django SECRET_KEY now loads DJANGO_SECRET_KEY from ignored root .env; the existing key was preserved locally. .env.example has placeholders.
 - Agent Git commands need a per-command safe.directory exception for this workspace because the sandbox and Windows accounts differ.
 - Agent network cannot reach GitHub port 443; pushing from the user's terminal worked for initial main. Do not claim later commits uploaded without verification.
+
+## School profile feature in progress
+
+- User chose one school per installation. Current branch: feature/school-settings, based on merged setup PR #1 (main 2db4fc0).
+- First increment: schools Django app with required name and optional email, phone and postal address. Optional contact fields follow the proposed defaults; user explicitly confirmed only the one-school scope.
+- Registered protected Django admin editing, one-row database constraint, initial migration and five tests. Admin permits adding only the first profile and does not permit deletion.
+- No school details have been seeded; user supplies their own through admin. React integration is the next increment after verifying this backend milestone.
+- Python execution is still denied by this session, so Django checks, migration consistency, tests and actual migration remain unverified and must run in the user's terminal. Do not mark this feature tested or ready to merge yet.
+
+## School profile verification and React integration
+
+- User reported Django check passed, schools.0001_initial migrated successfully, and all original five model/admin tests passed on PostgreSQL. User created an administrator and saved the school profile.
+- Added read-only GET /api/school/profile/ returning only the saved name; missing profile returns school: null. No public editing or contact-detail exposure.
+- React displays the saved name with loading, empty and error states. Direct Django and Vite-proxied requests both returned HTTP 200 with a school name.
+- TypeScript and lint checks passed. Added three API tests (eight total); user still needs to run the expanded test suite because agent Python execution is restricted. Migration consistency check has not yet been confirmed by the user.
+
+- User confirmed the React school name displays correctly, migration consistency reports no changes, and all eight school tests pass. Frontend production build also passed. School profile feature is ready for review on feature/school-settings.
