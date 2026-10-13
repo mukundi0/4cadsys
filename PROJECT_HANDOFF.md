@@ -144,3 +144,12 @@ files before editing, and preserve user changes.
 - Verified HTTP 200 and expected JSON directly on port 8000 and through Vite on port 5173. TypeScript check and Vite production build passed.
 - A separate Django check command could not launch because access to the underlying Python executable was denied in the agent session; the existing Django server successfully served the endpoint.
 - Next learning step: user opens http://localhost:5173 and confirms “Django is connected!” before proceeding to a new feature.
+
+## Git and setup documentation (2026-10-13)
+
+- Git repository initialized on main. Initial commit: 601cb6f, authored by Mukundi, with no AI co-author credits. User requested no AI contributor attribution for future commits too.
+- origin: https://github.com/mukundi0/4cadsys.git. Local origin/main matches the initial commit following the user's push.
+- Current setup work is on chore/project-setup: root README.md and backend/requirements.txt record local setup and installed package versions.
+- Django SECRET_KEY now loads DJANGO_SECRET_KEY from ignored root .env; the existing key was preserved locally. .env.example has placeholders.
+- Agent Git commands need a per-command safe.directory exception for this workspace because the sandbox and Windows accounts differ.
+- Agent network cannot reach GitHub port 443; pushing from the user's terminal worked for initial main. Do not claim later commits uploaded without verification.
