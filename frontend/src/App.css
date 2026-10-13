@@ -1,0 +1,9 @@
+.connection-page {
+  padding: 48px 24px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.connection-error {
+  color: #b42318;
+}
