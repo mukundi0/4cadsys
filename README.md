@@ -1,139 +1,45 @@
 # 4cadsys
 
-A configurable school management system built with React, TypeScript, Django and PostgreSQL.
+A school management portal built with React, TypeScript, Supabase Auth, Postgres, Storage, and Edge Functions.
 
-## Current milestone
+## Supabase setup
 
-React calls GET /api/school/profile/ and displays the school name saved in PostgreSQL. Vite forwards /api requests to Django during development. GET /api/health/ remains available as a basic connectivity check without querying the database.
+1. Create a Supabase project and copy its Project URL and publishable (or legacy anon) key.
+2. In the project root, copy `.env.example` to `frontend/.env.local`, then set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+3. Install and run the frontend:
 
-Admissions, finance, academics and the other planned school workflows are not implemented yet. See PROJECT_HANDOFF.md for the agreed scope.
+   ```powershell
+   cd frontend
+   npm.cmd ci
+   npm.cmd run dev
+   ```
 
-## Tools needed
+4. Install the [Supabase CLI](https://supabase.com/docs/guides/cli) and link this folder to the project. Apply the database migration and deploy the API function:
 
-- Python 3.13
-- Node.js and npm (the existing project was checked with Node 26)
-- Docker Desktop, running with Docker Compose
-- Git
+   ```powershell
+   supabase login
+   supabase --workdir backend link --project-ref YOUR_PROJECT_REF
+   supabase --workdir backend db push
+   supabase --workdir backend functions deploy school-api --no-verify-jwt
+   supabase --workdir backend functions deploy daraja-callback --no-verify-jwt
+   ```
 
-The commands below use Windows PowerShell. Run them from the project root unless stated otherwise.
+   Supabase injects its server-side API secrets into Edge Functions. Never put a secret key in a `VITE_` variable or browser code. Configure optional Daraja/email secrets with `supabase --workdir backend secrets set MPESA_CONSUMER_KEY=... MPESA_CONSUMER_SECRET=... MPESA_SHORTCODE=... MPESA_PASSKEY=... DARAJA_CALLBACK_SECRET=... MPESA_CALLBACK_URL=... RESEND_API_KEY=...`.
 
-## First setup on another computer
+5. Create school users in Supabase Auth. The migration trigger creates a `profiles` row for each account; update its role in the Supabase Dashboard's Table Editor. Add each student's `students` row or each guardian's `guardians` row and guardian links. Staff roles must be assigned only by a trusted project owner.
 
-### 1. Download the project
+6. The linked demo project currently has a `Demo School` profile with `demo@example.com` as the contact email, plus one auto-confirmed demo admin account. Replace the demo school details and change the admin password before real use. Configure `teacher_assignments`, `timetable_configurations`, `timetable_requirements`, `teacher_availability`, `attendance_alert_policies`, and `initial_payment_policies` as needed for the term. Staff screens can then manage admissions, invoices, payments, attendance, reports, and generated lessons through the API.
 
-~~~powershell
-git clone https://github.com/mukundi0/4cadsys.git
-cd 4cadsys
-~~~
+The migration is in `backend/supabase/migrations/`. It creates the school domain tables, enables row level security, limits direct browser access, and creates the private `school-private` Storage bucket. User-facing domain requests go through `backend/supabase/functions/school-api`, which verifies the caller's Supabase access token and checks the profile role before using its server-only database key. Related actions such as assignment submission, invoice creation and editing, payment review, admission decisions, report-session creation, timetable generation, and report publication use database transactions. M-Pesa callbacks are handled by a separate function because Safaricom calls them without a Supabase user session; callback processing is idempotent and locked by checkout ID, and it requires a random callback secret in the URL.
 
-If you already have this project open, use its existing folder instead. On the original computer it is C:\Users\MUKUNDI\Desktop\ams.
+## Supabase backend
 
-### 2. Install the Python dependencies
+The student portal, staff dashboard, admissions and document review, finance verification and invoice creation, enrolment gates, attendance registers and alerts, reports, timetable editing/generation, private document/payment proofs, and M-Pesa STK/callback paths have Supabase Edge Function handlers. Supabase is the only application backend.
 
-~~~powershell
-py -3.13 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
-~~~
+The Supabase migration and both Edge Functions are deployed to the configured project. The hosted database has 31 public tables with RLS enabled on every table, the `school-private` bucket is private, and all nine business RPCs are restricted to the server role. The deployed functions are active; unauthenticated access is rejected, and a demo admin sign-in was verified against the live API. Create student, guardian, and staff Supabase Auth accounts and matching profile/domain rows as needed. Parent-facing UI is not built yet. M-Pesa requires Daraja credentials and callback configuration; email delivery requires a Resend key.
 
-The virtual environment keeps this project's Python packages separate from other projects. Calling its Python directly avoids needing to activate it.
+## Local configuration and data
 
-### 3. Create your local configuration
+Keep the actual project URL and public key in `frontend/.env.local`; that file is ignored by Git. Supabase Auth is configured for email and password, so sign-in uses the account email address. Create Supabase Auth users and matching profile/domain rows in the project before signing in.
 
-~~~powershell
-Copy-Item .env.example .env
-~~~
-
-Only run that copy for a new checkout without an existing .env. Open .env and replace the password and Django secret placeholders. Choose a long, random Django secret. Keep these values private; Git ignores .env.
-
-The POSTGRES settings are used when Docker first creates the database volume. Changing them later does not change credentials in an existing database.
-
-### 4. Start the database and prepare its tables
-
-~~~powershell
-docker compose up -d db
-.\.venv\Scripts\python.exe backend/manage.py migrate
-~~~
-
-Docker runs PostgreSQL in the background. Migrations create the database tables Django needs. If PostgreSQL is still starting, wait briefly and retry the migration.
-
-### 5. Install the frontend dependencies
-
-~~~powershell
-cd frontend
-npm.cmd ci
-cd ..
-~~~
-
-npm.cmd avoids PowerShell execution-policy issues with npm.ps1. The lockfile records the frontend dependency versions.
-
-## Run the project each day
-
-In a terminal at the project root:
-
-~~~powershell
-docker compose up -d db
-.\.venv\Scripts\python.exe backend/manage.py runserver
-~~~
-
-Keep that terminal open. In a second terminal at the project root:
-
-~~~powershell
-cd frontend
-npm.cmd run dev
-~~~
-
-Open the local URL Vite prints, usually http://localhost:5173. You should see your saved school name, or a message that the school profile has not been set up yet.
-
-You can also open http://127.0.0.1:8000/api/health/ directly to see the JSON response. If the frontend cannot connect, confirm Django is running on port 8000 and restart Vite after changing its configuration. Use Ctrl+C in each terminal to stop a development server.
-
-## Checks
-
-From the project root:
-
-~~~powershell
-.\.venv\Scripts\python.exe backend/manage.py check
-~~~
-
-From frontend:
-
-~~~powershell
-npm.cmd run build
-npm.cmd run lint
-~~~
-
-## Branch workflow
-
-main holds completed, checked work. Create a branch for each task, such as chore/project-setup or feature/school-settings. Commit the changes, push the branch, and review a pull request before merging into main.
-
-~~~powershell
-git push -u origin chore/project-setup
-~~~
-
-## Development limits
-
-This is a local development setup. Django DEBUG is enabled, and the Vite API proxy only operates during development. Production hosting, API routing and deployment settings still need to be configured.
-
-Secrets, the Python virtual environment, node_modules, build output, local databases and uploaded media are excluded from Git. .env.example contains placeholders only.
-
-## School profile (one school per installation)
-
-The schools app stores one school profile. Its name is required; email, phone and postal address are optional. An administrator creates and edits it through Django admin. A database constraint prevents additional profiles, and admin deletion is disabled.
-
-After updating the code, run from the project root:
-
-~~~powershell
-.\.venv\Scripts\python.exe backend/manage.py check
-.\.venv\Scripts\python.exe backend/manage.py makemigrations --check --dry-run
-.\.venv\Scripts\python.exe backend/manage.py test schools
-.\.venv\Scripts\python.exe backend/manage.py migrate
-~~~
-
-Tests use a separate test database; PostgreSQL must be running. If you do not yet have an administrator account, create one locally:
-
-~~~powershell
-.\.venv\Scripts\python.exe backend/manage.py createsuperuser
-~~~
-
-Choose your own username and password in the terminal. With Django running, visit http://127.0.0.1:8000/admin/, sign in, and open **School settings → School profile**. Add your school details and save. Later, open that same record to edit it.
-
-React displays the saved school name through the read-only GET /api/school/profile/ endpoint. This public endpoint returns only the name, with {"school": null} before setup. Contact details and editing remain in Django admin. Refresh the React page after editing the name.
+For local Supabase development, follow the Supabase CLI local development guide, then run `supabase --workdir backend start` and `supabase --workdir backend db reset`. Copy `backend/supabase/functions/.env.example` to `backend/supabase/functions/.env` and fill in any local Daraja/email credentials needed. That `.env` file is ignored by Git.

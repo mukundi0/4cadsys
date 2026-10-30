@@ -1,12 +1,11 @@
-.venv/
 .env
-__pycache__/
-*.py[cod]
 # Local configuration and generated files
 .env.*
 !.env.example
+!backend/supabase/functions/.env.example
+backend/supabase/functions/.env
+backend/supabase/.temp/
+backend/supabase/.branches/
 node_modules/
 dist/
 *.tsbuildinfo
-*.sqlite3
-media/

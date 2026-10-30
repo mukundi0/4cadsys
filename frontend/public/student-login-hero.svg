@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 900" fill="none">
+  <title>A hand-drawn still life of school books beside a classroom window</title>
+  <rect width="720" height="900" fill="#F4E5CC"/>
+
+  <!-- Sunlit classroom window -->
+  <path d="M430 0H720V480H430z" fill="#D6E8E3"/>
+  <path d="M451 32h240v187H451z" fill="#B8D5D3"/>
+  <path d="M452 32h239v187H452z" fill="#C9E0DB"/>
+  <path d="M452 220h239v190H452z" fill="#E7D2A7"/>
+  <path d="M452 345c46-32 83-27 123-8 42-45 81-34 116-10v83H452z" fill="#789779"/>
+  <path d="M452 383c61-24 105-12 148 3 31-21 60-19 91-9v33H452z" fill="#52745D"/>
+  <path d="M430 0h21v435h-21zM691 0h29v435h-29z" fill="#284D3D"/>
+  <path d="M430 205h290v17H430z" fill="#284D3D"/>
+  <path d="M430 423h290v18H430z" fill="#284D3D"/>
+  <path d="M423 0h9v460h-9z" fill="#D68045"/>
+
+  <!-- Loose paper shapes and sun marks -->
+  <path d="m0 108 118-69 80 140L0 254z" fill="#D96C3B"/>
+  <path d="m42 302 118-35 45 111-137 38z" fill="#E7B86D"/>
+  <path d="M276 78h8M300 100h8M273 121h8" stroke="#C87946" stroke-width="4" stroke-linecap="round"/>
+  <path d="M362 116c8-12 20-12 28 0-8 12-20 12-28 0Z" fill="#E3AA63"/>
+
+  <!-- Desk -->
+  <path d="M0 620c118-14 222-2 344-12 128-11 253-5 376 8v284H0z" fill="#B95B36"/>
+  <path d="M0 644c124-13 237-4 354-12 116-8 245-5 366 8v27c-134-10-246-13-364-4-128 9-238 1-356 12z" fill="#D88349"/>
+  <path d="M61 680v220M666 677v223" stroke="#87452F" stroke-width="15"/>
+  <path d="M82 700v200M647 700v200" stroke="#D18049" stroke-width="5"/>
+  <path d="M24 728c70 7 125 4 193-3M38 754c48 4 92 4 131 1M511 712c47 4 97 1 156 7" stroke="#9A4D32" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+
+  <!-- Potted classroom plant -->
+  <path d="M80 627c-3-57 2-112 22-169M103 539c-34-41-62-49-81-38 2 34 31 57 81 58M104 503c5-49 30-78 67-83 13 37-9 72-67 94M98 574c-29-34-57-40-79-26 9 31 34 43 79 44M105 468c-6-44 8-75 38-94 25 29 13 59-38 94Z" fill="#52745D" stroke="#284D3D" stroke-width="5" stroke-linejoin="round"/>
+  <path d="m54 613 99 3-10 80H63z" fill="#D97545" stroke="#87452F" stroke-width="5" stroke-linejoin="round"/>
+  <path d="m59 615 91 3-2 15-91-3z" fill="#E7B86D"/>
+
+  <!-- Open notebook and pencil -->
+  <path d="m104 700 195-24 25 124-197 28z" fill="#F9F1DE" stroke="#314C41" stroke-width="5" stroke-linejoin="round"/>
+  <path d="m305 676 207 1-6 126-182-3z" fill="#FFF8E8" stroke="#314C41" stroke-width="5" stroke-linejoin="round"/>
+  <path d="m307 682 7 109M335 701l133 2M331 722l111 2M330 743l139 2M327 765l104 2" stroke="#D3C2A6" stroke-width="3" stroke-linecap="round"/>
+  <path d="m143 730 99-12M147 748l82-11" stroke="#75836C" stroke-width="4" stroke-linecap="round"/>
+  <path d="m105 839 183-21 5 12-184 22z" fill="#DCA24F" stroke="#87452F" stroke-width="3" stroke-linejoin="round"/>
+  <path d="m105 839-19 12 22 1z" fill="#314C41"/>
+
+  <!-- Subject books, intentionally simple and clearly labeled -->
+  <g stroke="#30483D" stroke-width="4" stroke-linejoin="round">
+    <path d="m407 425 289-8 6 75-292 8z" fill="#315A4B"/>
+    <path d="m404 501 301-5-1 75-300 5z" fill="#C55237"/>
+    <path d="m395 579 313-5 4 75-316 6z" fill="#D99A3E"/>
+    <path d="m405 657 302-3 4 75-302 3z" fill="#52745D"/>
+    <path d="m395 735 315-4 3 76-314 3z" fill="#B95B36"/>
+  </g>
+  <g fill="none" stroke="#E8C78B" stroke-width="3">
+    <path d="m425 437 3 43M433 437l3 43M422 513l1 49M430 512l1 49M415 591l1 48M423 591l1 48M426 668l1 49M434 668l1 49M416 746l1 49M424 746l1 49"/>
+    <path d="m671 422 2 61M681 422l2 61M673 500l1 58M683 500l1 58M676 579l1 59M686 579l1 59M675 657l1 58M685 657l1 58M676 735l1 58M686 735l1 58"/>
+  </g>
+  <g fill="#FFF0D2" font-family="Georgia, 'Times New Roman', serif" font-size="19" font-weight="700" text-anchor="middle" letter-spacing="1">
+    <text x="551" y="465">MATHEMATICS</text>
+    <text x="554" y="545">SCIENCE</text>
+    <text x="551" y="623">ENGLISH</text>
+    <text x="556" y="701">HISTORY</text>
+    <text x="551" y="779">GEOGRAPHY</text>
+  </g>
+
+  <!-- A few imperfect ink flecks for a printed, handmade finish -->
+  <g fill="#7F4A35" opacity=".28">
+    <circle cx="39" cy="588" r="2"/><circle cx="180" cy="663" r="2.5"/><circle cx="356" cy="850" r="2"/>
+    <circle cx="381" cy="635" r="1.8"/><circle cx="26" cy="681" r="2.2"/><circle cx="367" cy="886" r="2"/>
+  </g>
+</svg>

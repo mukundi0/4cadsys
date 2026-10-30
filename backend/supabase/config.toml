@@ -1,0 +1,5 @@
+[functions.school-api]
+verify_jwt = false
+
+[functions.daraja-callback]
+verify_jwt = false
