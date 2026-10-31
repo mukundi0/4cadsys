@@ -24,7 +24,7 @@ export default function SignIn({ onSignedIn }: { onSignedIn: () => void }) {
   return <div className="signin">
     <section className="signin-brand on-brand">
       <div className="row"><Crest size={56} /><div><h2>{school}</h2><p className="sub">Student, parent and staff portal</p></div></div>
-      <div className="signin-hero"><Logo size={20} animated onDark /><p className="eyebrow">Welcome</p><p>Lessons, reports and fees in one place.</p></div>
+      <div className="signin-hero"><Logo size={20} animated onDark /><p>Lessons, reports and fees in one place.</p></div>
       <Powered />
     </section>
     <section className="signin-form">

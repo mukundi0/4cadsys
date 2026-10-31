@@ -37,7 +37,7 @@ export default function StaffPortal({ school, path, name, onSignOut }: { school:
   const nav: NavItem[] = [{ path: '/staff', label: 'Overview' }, { path: '/staff/admissions', label: 'Admissions', count: toReview }, { path: '/staff/enrolments', label: 'Enrolments', count: ready }, { path: '/staff/finance', label: 'Finance', count: pending }, { path: '/staff/attendance', label: 'Attendance' }, { path: '/staff/reports', label: 'Reports' }, { path: '/staff/timetable', label: 'Timetable' }]
   const tabs = [nav[0], nav[1], nav[3], nav[4]]
   const page = nav.find(n => n.path === path)?.path ?? '/staff'
-  return <Shell portal="staff" portalName="School office" school={school} user={{ name, role: 'School staff' }} nav={nav} tabs={tabs} path={page} term={data.term} switchTo={{ label: 'Student portal →', path: '/' }} onSignOut={onSignOut}>
+  return <Shell portal="staff" portalName="School office" school={school} user={{ name, role: 'School staff' }} nav={nav} tabs={tabs} path={page} term={data.term} onSignOut={onSignOut}>
     {error && <Notice onDismiss={() => setError('')}>{error}</Notice>}
     {page === '/staff' && <Overview name={name} data={data} toReview={toReview} ready={ready} pending={pending} />}
     {page === '/staff/admissions' && <Admissions data={data} act={act} busy={busy} />}

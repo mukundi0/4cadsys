@@ -6,7 +6,6 @@ import { Card, Empty, Notice, PageHead, Pill, Segmented, initials, longDate, mon
 import { navigate } from '../router'
 import { loadChildPortal, loadChildren, loadNotifications, markNotificationRead, saveGuardian, sendStkPush, submitProof } from '../parentApi'
 import type { Child, ChildPortal, ParentNotification } from '../parentApi'
-import { StatementTable } from '../student/StudentPortal'
 
 const nav: NavItem[] = [{ path: '/parent', label: 'Overview' }, { path: '/parent/fees', label: 'Fees and payments' }, { path: '/parent/reports', label: 'Reports' }, { path: '/parent/attendance', label: 'Attendance' }, { path: '/parent/notices', label: 'Notices' }, { path: '/parent/details', label: 'My details' }]
 const tabs: NavItem[] = [{ path: '/parent', label: 'Home' }, { path: '/parent/fees', label: 'Fees' }, { path: '/parent/reports', label: 'Reports' }, { path: '/parent/details', label: 'More' }]
@@ -99,7 +98,9 @@ function Fees({ child, portal, onChanged }: { child: Child; portal: ChildPortal;
           <button className="btn" disabled={busy || !Number(amount)}>{busy ? 'Sending…' : tab === 'mpesa' ? 'Send M-Pesa prompt' : 'Submit proof'}</button>
         </form> : <Empty title="Nothing to pay" body="There is no open invoice for this term." />}
       </Card>
-      <Card title="Statement" className="flush"><StatementTable statement={statement} /></Card>
+      <Card title="Statement">{statement.length ? <div>{statement.map((x, i) => { const pay = x.payment !== '0'; return <div key={i} className="row between" style={{ padding: '10px 0', borderBottom: '1px solid var(--rule-soft)' }}>
+          <div className="cell"><b>{x.description}</b><span className="mono">{x.date || '—'}{x.receipt ? ' · ' + x.receipt : ''}</span></div>
+          <div className="cell right"><b className="mono">{pay ? '− ' + money(x.payment) : money(x.charge)}</b>{x.status && <Pill tone={statusTone(x.status)}>{x.status}</Pill>}</div></div> })}</div> : <Empty title="No invoices or payments" body="Nothing has been recorded for this term." />}</Card>
     </div>
   </>
 }

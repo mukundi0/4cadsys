@@ -21,7 +21,7 @@ export default function StudentPortal({ school, path, onSignOut }: { school: str
   if (!portal) return <div className="content">{error ? <Notice>{error}</Notice> : <p className="muted" role="status">Loading your portal…</p>}</div>
   const s = portal.student, page = nav.find(n => n.path === path) ? path : '/'
   const open = (a: Assignment) => { setSelected(a.id); navigate('/learning') }
-  return <Shell portal="student" portalName="Student portal" school={school} user={{ name: s.name, role: `${s.level} · ${s.stream}` }} nav={nav} tabs={tabs} path={page} term={s.term} switchTo={{ label: 'Staff portal →', path: '/staff' }} onSignOut={onSignOut}>
+  return <Shell portal="student" portalName="Student portal" school={school} user={{ name: s.name, role: `${s.level} · ${s.stream}` }} nav={nav} tabs={tabs} path={page} term={s.term} onSignOut={onSignOut}>
     {error && <Notice onDismiss={() => setError('')}>{error}</Notice>}
     {page === '/' && <Home portal={portal} onOpen={open} />}
     {page === '/learning' && <Learning portal={portal} selectedId={selected} onSelect={setSelected} onSubmitted={() => { setSelected(null); setRefresh(x => x + 1) }} onError={setError} />}
