@@ -3,6 +3,7 @@ import SignIn from './SignIn'
 import { detectRole, loadSchoolName, signOutAll } from './auth'
 import type { Who } from './auth'
 import { applySchoolTheme } from './theme'
+import { Logo } from './ui'
 import { migrateLegacyHash, navigate, usePath } from './router'
 
 const StudentPortal = lazy(() => import('./student/StudentPortal'))
@@ -30,7 +31,7 @@ export default function App() {
   useEffect(() => { if (who && !belongs(path, who.role)) navigate(home[who.role], true) }, [who, path])
   const signOut = async () => { await signOutAll(); setWho(null); navigate('/', true) }
 
-  if (who === undefined) return <p className="muted" style={{ padding: 32 }} role="status">Loading…</p>
+  if (who === undefined) return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }} role="status" aria-label="Loading"><Logo size={22} animated /></div>
   if (!who) return <>{error && <p className="notice bad" role="alert">{error}</p>}<SignIn onSignedIn={() => void load()} /></>
   const props = { school: school || 'Your school', path, onSignOut: () => void signOut() }
   return <Suspense fallback={<p className="muted" style={{ padding: 32 }} role="status">Loading…</p>}>

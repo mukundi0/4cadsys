@@ -31,7 +31,7 @@ export default function Reports({ term, onError }: { term: string; onError: (m: 
   }
   const missing = (sessions ?? []).filter(s => !s.published).flatMap(s => s.reports.flatMap(r => r.subjects.filter(x => x.mark === null).map(x => `${s.class} ${s.stream} · ${r.name} · ${x.subject}`)))
   return <>
-    <PageHead eyebrow={term} title="Reports" sub="Subject teacher → Class teacher → Principal" />
+    <PageHead eyebrow={term || undefined} title="Reports" sub="Subject teacher → Class teacher → Principal" />
     <Card className="flush">{sessions?.length ? <div className="table-wrap"><table style={{ ['--tw' as string]: '860px' }}><thead><tr><th>Stream</th><th>Marks collected</th><th>Status</th><th>Action</th></tr></thead><tbody>{sessions.map(s => {
       const cells = s.reports.flatMap(r => r.subjects), got = cells.filter(c => c.mark !== null).length, [label, tone] = sessionState(s)
       return <tr key={s.id}><th scope="row"><div className="cell"><b>{s.class} {s.stream}</b><span>{s.title} · {s.period}</span></div></th><td style={{ minWidth: 180 }}><Progress value={cells.length ? got / cells.length * 100 : 0} /><span className="mono muted" style={{ fontSize: 12 }}>{got} / {cells.length}</span></td><td><Pill tone={tone}>{label}</Pill></td>

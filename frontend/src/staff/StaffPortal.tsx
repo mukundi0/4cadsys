@@ -12,19 +12,22 @@ import Reports from './Reports'
 import Timetable from './Timetable'
 
 export type Dashboard = { students: number; applications: number; pendingPayments: number; outstanding: string; attendanceToday: { present: number; absent: number } }
-export type StaffData = { dashboard: Dashboard | null; applicants: Applicant[]; payments: Payment[]; enrolments: Enrolment[]; term: string }
+export type StaffData = { dashboard: Dashboard | null; applicants: Applicant[]; payments: Payment[]; enrolments: Enrolment[] }
 export type Act = (url: string, data: unknown) => Promise<boolean>
 
+const termPages = ['/staff/attendance', '/staff/reports', '/staff/timetable']
 const abbreviate = (v: string) => { const n = Number(v || 0); return 'KSh ' + (n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'K' : n.toLocaleString('en-KE')) }
 
 export default function StaffPortal({ school, path, name, onSignOut }: { school: string; path: string; name: string; onSignOut: () => void }) {
-  const [data, setData] = useState<StaffData>({ dashboard: null, applicants: [], payments: [], enrolments: [], term: '' })
+  const [data, setData] = useState<StaffData>({ dashboard: null, applicants: [], payments: [], enrolments: [] })
+  const [term, setTermState] = useState(() => { try { return localStorage.getItem('acadsys-staff-term') ?? '' } catch { return '' } })
+  const setTerm = (t: string) => { setTermState(t); try { localStorage.setItem('acadsys-staff-term', t) } catch { /* private mode */ } }
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const refresh = useCallback(async () => {
     try {
       const [dashboard, a, f, e] = await Promise.all([staffRequest<Dashboard>('/api/staff/dashboard/'), staffRequest<{ applicants: Applicant[] }>('/api/staff/admissions/'), staffRequest<{ payments: Payment[] }>('/api/staff/finance/'), staffRequest<{ enrolments: Enrolment[] }>('/api/staff/enrolments/')])
-      setData({ dashboard, applicants: a.applicants, payments: f.payments, enrolments: e.enrolments, term: e.enrolments[0]?.term ?? a.applicants[0]?.term ?? '' })
+      setData({ dashboard, applicants: a.applicants, payments: f.payments, enrolments: e.enrolments })
     } catch (x) { setError(x instanceof Error ? x.message : 'Could not load school data.') }
   }, [])
   useEffect(() => { void refresh() }, [refresh])
@@ -37,15 +40,16 @@ export default function StaffPortal({ school, path, name, onSignOut }: { school:
   const nav: NavItem[] = [{ path: '/staff', label: 'Overview' }, { path: '/staff/admissions', label: 'Admissions', count: toReview }, { path: '/staff/enrolments', label: 'Enrolments', count: ready }, { path: '/staff/finance', label: 'Finance', count: pending }, { path: '/staff/attendance', label: 'Attendance' }, { path: '/staff/reports', label: 'Reports' }, { path: '/staff/timetable', label: 'Timetable' }]
   const tabs = [nav[0], nav[1], nav[3], nav[4]]
   const page = nav.find(n => n.path === path)?.path ?? '/staff'
-  return <Shell portal="staff" portalName="School office" school={school} user={{ name, role: 'School staff' }} nav={nav} tabs={tabs} path={page} term={data.term} onSignOut={onSignOut}>
+  return <Shell portal="staff" portalName="School office" school={school} user={{ name, role: 'School staff' }} nav={nav} tabs={tabs} path={page} term={term || undefined} onSignOut={onSignOut}>
     {error && <Notice onDismiss={() => setError('')}>{error}</Notice>}
     {page === '/staff' && <Overview name={name} data={data} toReview={toReview} ready={ready} pending={pending} />}
     {page === '/staff/admissions' && <Admissions data={data} act={act} busy={busy} />}
     {page === '/staff/enrolments' && <Enrolments data={data} act={act} busy={busy} />}
     {page === '/staff/finance' && <Finance data={data} act={act} busy={busy} />}
-    {page === '/staff/attendance' && <Attendance term={data.term} onError={setError} />}
-    {page === '/staff/reports' && <Reports term={data.term} onError={setError} />}
-    {page === '/staff/timetable' && <Timetable term={data.term} onError={setError} />}
+    {termPages.includes(page) && <label className="field" style={{ maxWidth: 260 }}>Term<input value={term} onChange={e => setTerm(e.target.value)} placeholder="e.g. Term 3, 2026" /></label>}
+    {page === '/staff/attendance' && <Attendance term={term} onError={setError} />}
+    {page === '/staff/reports' && <Reports term={term} onError={setError} />}
+    {page === '/staff/timetable' && <Timetable term={term} onError={setError} />}
   </Shell>
 }
 

@@ -72,18 +72,19 @@ function Fees({ child, portal, onChanged }: { child: Child; portal: ChildPortal;
   const t = feeTotals(portal.fees), invoice = portal.fees?.invoices.find(i => i.status === 'issued')
   const [tab, setTab] = useState<'mpesa' | 'proof'>('mpesa')
   const [phone, setPhone] = useState(''), [amount, setAmount] = useState(String(Math.max(0, t.balance))), [ref, setRef] = useState('')
-  const [file, setFile] = useState<File | null>(null), [busy, setBusy] = useState(false), [msg, setMsg] = useState(''), [err, setErr] = useState('')
+  const [file, setFile] = useState<File | null>(null), [method, setMethod] = useState<'mpesa' | 'bank'>('mpesa'), [sheet, setSheet] = useState(''), [busy, setBusy] = useState(false), [msg, setMsg] = useState(''), [err, setErr] = useState('')
   const statement = useMemo(() => [...(portal.fees?.statement ?? [])].reverse(), [portal.fees])
   if (!portal.fees) return <><PageHead eyebrow="Parent portal" title="Fees and payments" /><Card><Empty title="Fees are hidden" body="The school has not given you finance access for this child." /></Card></>
   async function submit(e: FormEvent) {
     e.preventDefault(); if (!invoice) return; setBusy(true); setErr(''); setMsg('')
     try {
-      if (tab === 'mpesa') { await sendStkPush(invoice.id, toMsisdn(phone), Number(amount)); setMsg(`Prompt sent to ${phone}. Enter your M-Pesa PIN to pay ${money(amount)}. The payment shows as pending until the accounts office verifies it.`) }
-      else { await submitProof(child.id, invoice.id, { transactionReference: ref, amount: Number(amount), method: file ? 'bank' : 'mpesa', ...(file ? { fileBase64: await readFile(file), fileName: file.name } : {}) }); setMsg('Proof received. The accounts office will verify it, and the payment shows as pending until then.'); setRef(''); setFile(null) }
+      if (tab === 'mpesa') { await sendStkPush(invoice.id, toMsisdn(phone), Number(amount)); setSheet(`We sent an M-Pesa prompt to ${phone}. Enter your PIN to pay ${money(amount)}. The payment shows as pending until the accounts office verifies it.`) }
+      else { await submitProof(child.id, invoice.id, { transactionReference: ref, amount: Number(amount), method, ...(file ? { fileBase64: await readFile(file), fileName: file.name } : {}) }); setMsg('Proof received. The accounts office will verify it, and the payment shows as pending until then.'); setRef(''); setFile(null) }
       onChanged()
     } catch (x) { setErr(x instanceof Error ? x.message : 'Could not complete the payment.') } finally { setBusy(false) }
   }
   return <>
+    {sheet && <div className="sheet-backdrop" role="dialog" aria-modal="true" aria-label="Check your phone"><div className="sheet"><span className="grab" /><div className="row"><i style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--amber)' }} /><h2>Check your phone</h2></div><p>{sheet}</p><button className="btn" style={{ background: 'var(--ink)', borderColor: 'var(--ink)' }} onClick={() => setSheet('')}>Done</button></div></div>}
     <PageHead eyebrow="Parent portal" title="Fees and payments" sub={`${child.name} · ${portal.student.term}`} />
     <div className="grid g-stat"><Card label="Total charges"><div className="stat"><span className="v mono">{money(t.charges)}</span></div></Card><Card label="Verified payments"><div className="stat"><span className="v mono">{money(t.verified)}</span></div></Card><section className="card highlight"><span className="card-label">Balance</span><div className="stat"><span className="v mono">{money(t.balance)}</span></div></section></div>
     <div className="grid g-eq" style={{ alignItems: 'start' }}>
@@ -92,8 +93,10 @@ function Fees({ child, portal, onChanged }: { child: Child; portal: ChildPortal;
           <Segmented full value={tab} onChange={setTab} options={[{ id: 'mpesa', label: 'M-Pesa' }, { id: 'proof', label: 'Upload proof' }]} />
           {tab === 'mpesa' ? <label className="field">M-Pesa phone number<input className="mono" inputMode="tel" placeholder="0722 000 000" value={phone} onChange={e => setPhone(e.target.value)} required /></label>
             : <><label className="field">Transaction reference<input className="mono" value={ref} onChange={e => setRef(e.target.value)} required /></label>
-              <label className="field">Screenshot or bank slip (PDF, JPEG or PNG)<input type="file" accept="application/pdf,image/jpeg,image/png" onChange={e => setFile(e.target.files?.[0] ?? null)} /></label></>}
+              <Segmented full value={method} onChange={setMethod} options={[{ id: 'mpesa', label: 'Paid by M-Pesa' }, { id: 'bank', label: 'Paid by bank' }]} />
+              <label className="field">{method === 'bank' ? 'Bank slip (required)' : 'M-Pesa message screenshot (optional)'} · PDF, JPEG or PNG<input required={method === 'bank'} type="file" accept="application/pdf,image/jpeg,image/png" onChange={e => setFile(e.target.files?.[0] ?? null)} /></label></>}
           <label className="field">Amount (KSh)<input className="mono" inputMode="numeric" value={amount} onChange={e => setAmount(e.target.value.replace(/[^\d.]/g, ''))} required /></label>
+          <div className="row wrap">{[5000, 10000].filter(n => n < t.balance).map(n => <button type="button" key={n} className="btn secondary sm mono" onClick={() => setAmount(String(n))}>{n.toLocaleString('en-KE')}</button>)}<button type="button" className="btn secondary sm mono" onClick={() => setAmount(String(Math.max(0, t.balance)))}>Full balance</button></div>
           {err && <Notice>{err}</Notice>}{msg && <Notice tone="warn">{msg}</Notice>}
           <button className="btn" disabled={busy || !Number(amount)}>{busy ? 'Sending…' : tab === 'mpesa' ? 'Send M-Pesa prompt' : 'Submit proof'}</button>
         </form> : <Empty title="Nothing to pay" body="There is no open invoice for this term." />}
@@ -122,13 +125,13 @@ function Notices({ notes, onRead }: { notes: ParentNotification[]; onRead: (id: 
 }
 function Details() {
   const [form, setForm] = useState({ phone: '', email: '' }), [saved, setSaved] = useState(false), [err, setErr] = useState('')
-  async function save(e: FormEvent) { e.preventDefault(); setErr(''); setSaved(false); try { await saveGuardian(form); setSaved(true) } catch (x) { setErr(x instanceof Error ? x.message : 'Could not save.') } }
+  async function save(e: FormEvent) { e.preventDefault(); setErr(''); setSaved(false); try { await saveGuardian({ ...(form.phone && { phone: form.phone }), ...(form.email && { email: form.email }) }); setSaved(true) } catch (x) { setErr(x instanceof Error ? x.message : 'Could not save.') } }
   return <><PageHead eyebrow="Parent portal" title="My details" />
     <Card className="" ><form className="stack" style={{ maxWidth: 480 }} onSubmit={save}>
-      <label className="field">Phone<input className="mono" inputMode="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} required /></label>
-      <label className="field">Email<input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required /></label>
+      <label className="field">Phone<input className="mono" inputMode="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></label>
+      <label className="field">Email<input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /><span className="muted" style={{ fontWeight: 400 }}>Leave blank to keep your current email. Changing it changes the email you sign in with.</span></label>
       {err && <Notice>{err}</Notice>}
-      <div className="row"><button className="btn">Save changes</button>{saved && <span className="ok-text" role="status">Saved</span>}</div>
+      <div className="row"><button className="btn" disabled={!form.phone && !form.email}>Save changes</button>{saved && <span className="ok-text" role="status">Saved</span>}</div>
       <p className="muted">To change who can see your children’s records, contact the school office.</p>
     </form></Card></>
 }

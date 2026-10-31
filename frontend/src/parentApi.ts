@@ -16,6 +16,6 @@ export const loadChildren = () => api<{ children: Child[] }>('/api/parent/childr
 export const loadChildPortal = (id: string) => api<ChildPortal>(`/api/parent/children/${id}/portal/`)
 export const loadNotifications = () => api<{ notifications: ParentNotification[] }>('/api/parent/notifications/').then(x => x.notifications)
 export const markNotificationRead = (id: string) => api(`/api/parent/notifications/${id}/read/`, 'POST', {})
-export const saveGuardian = (data: { firstName?: string; lastName?: string; phone: string; email: string }) => api<{ name: string; email: string; phone: string }>('/api/parent/profile/', 'POST', data)
+export const saveGuardian = (data: { firstName?: string; lastName?: string; phone?: string; email?: string }) => api<{ name: string; email: string; phone: string }>('/api/parent/profile/', 'POST', data)
 export const sendStkPush = (invoiceId: string, phone: string, amount: number) => api(`/api/parent/invoices/${invoiceId}/stk-push/`, 'POST', { phone, amount })
 export const submitProof = (childId: string, invoiceId: string, data: { transactionReference: string; amount: number; method: 'mpesa' | 'bank'; fileBase64?: string; fileName?: string }) => api(`/api/parent/children/${childId}/invoices/${invoiceId}/proof/`, 'POST', data)
