@@ -40,8 +40,6 @@ The migration is in `backend/supabase/migrations/`. It creates the school domain
 
 The student portal, staff dashboard, admissions and document review, finance verification and invoice creation, enrolment gates, attendance registers and alerts, reports, timetable editing/generation, private document/payment proofs, and M-Pesa STK/callback paths have Supabase Edge Function handlers. Supabase is the only application backend.
 
-Administrator accounts use a dedicated `/admin` area for account creation, role changes, school contact details, and the initial-payment policy. The endpoints require the `admin` profile role and enforce role changes on the server. Newly created identities receive a profile; student and guardian accounts still need their corresponding school records and links before those portals can be used. Deploy the updated `school-api` Edge Function when publishing these local changes.
-
 The Supabase migration and both Edge Functions are deployed to the configured project. The hosted database has 31 public tables with RLS enabled on every table, the `school-private` bucket is private, and all nine business RPCs are restricted to the server role. The deployed functions are active; unauthenticated access is rejected, and a demo admin sign-in was verified against the live API. Create student, guardian, and staff Supabase Auth accounts and matching profile/domain rows as needed. Parent-facing UI is not built yet. M-Pesa requires Daraja credentials and callback configuration; email delivery requires a Resend key.
 
 ## Local configuration and data
@@ -49,4 +47,3 @@ The Supabase migration and both Edge Functions are deployed to the configured pr
 Keep the actual project URL and public key in `frontend/.env.local`; that file is ignored by Git. Supabase Auth is configured for email and password, so sign-in uses the account email address. Create Supabase Auth users and matching profile/domain rows in the project before signing in.
 
 For local Supabase development, follow the Supabase CLI local development guide, then run `supabase --workdir backend start` and `supabase --workdir backend db reset`. Copy `backend/supabase/functions/.env.example` to `backend/supabase/functions/.env` and fill in any local Daraja/email credentials needed. That `.env` file is ignored by Git.
-
