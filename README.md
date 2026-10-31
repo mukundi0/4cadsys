@@ -32,6 +32,10 @@ A school management portal built with React, TypeScript, Supabase Auth, Postgres
 
 The migration is in `backend/supabase/migrations/`. It creates the school domain tables, enables row level security, limits direct browser access, and creates the private `school-private` Storage bucket. User-facing domain requests go through `backend/supabase/functions/school-api`, which verifies the caller's Supabase access token and checks the profile role before using its server-only database key. Related actions such as assignment submission, invoice creation and editing, payment review, admission decisions, report-session creation, timetable generation, and report publication use database transactions. M-Pesa callbacks are handled by a separate function because Safaricom calls them without a Supabase user session; callback processing is idempotent and locked by checkout ID, and it requires a random callback secret in the URL.
 
+## Previewing the frontend without Supabase
+
+`npm run dev` also serves sample data for every portal, in development only: open `/?demo=student`, `/?demo=parent` or `/?demo=staff`. The sample data lives in `frontend/src/demo.ts` and is not included in production builds.
+
 ## Supabase backend
 
 The student portal, staff dashboard, admissions and document review, finance verification and invoice creation, enrolment gates, attendance registers and alerts, reports, timetable editing/generation, private document/payment proofs, and M-Pesa STK/callback paths have Supabase Edge Function handlers. Supabase is the only application backend.

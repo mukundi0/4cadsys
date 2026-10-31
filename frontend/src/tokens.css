@@ -1,0 +1,39 @@
+/* Acadsys design tokens. --brand-* are overridden per school (see theme.ts). */
+:root {
+  --brand: oklch(0.42 0.14 255);
+  --brand-hover: oklch(0.36 0.14 255);
+  --brand-ink: oklch(0.34 0.14 255);
+  --brand-tint: oklch(0.93 0.035 245);
+  --brand-soft: oklch(0.965 0.02 245);
+  --brand-border: oklch(0.80 0.07 250);
+  --brand-on-muted: oklch(0.88 0.04 245);
+  --on-brand: #fff;
+
+  --amber: oklch(0.80 0.13 80);
+
+  --ink: #121821;
+  --text-2: #4A5462;
+  --muted: #5A6472;
+  --faint: #7A8492;
+  --paper: oklch(0.975 0.005 240);
+  --surface: #fff;
+  --rule: #DCE1E8;
+  --rule-soft: #E9EDF2;
+  --control-border: #CDD3DB;
+  --staff-sidebar: #121821;
+  --staff-sidebar-active: #232B37;
+  --staff-sidebar-text: #A3ACB9;
+
+  --ok-bg: oklch(0.94 0.05 155);   --ok-fg: oklch(0.38 0.10 155);   --ok: oklch(0.55 0.13 155);
+  --warn-bg: oklch(0.95 0.06 85);  --warn-fg: oklch(0.45 0.10 70);
+  --bad-bg: oklch(0.95 0.03 28);   --bad-fg: oklch(0.48 0.16 28);   --bad: oklch(0.55 0.17 28);
+  --info-bg: var(--brand-tint);    --info-fg: var(--brand-ink);
+  --neutral-bg: #E9EDF2;           --neutral-fg: #4A5462;
+
+  --font-sans: 'Geist', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+
+  --r-pill: 999px; --r-card: 12px; --r-control: 8px; --r-nav: 7px; --r-chip: 6px;
+
+  --sidebar-w: 240px; --topbar-h: 60px; --content-max: 1180px; --content-max-staff: 1240px;
+}

@@ -24,6 +24,7 @@ export async function token(): Promise<string> {
   return current.access_token
 }
 export async function api<T>(path: string, method: 'GET'|'POST'='GET', body?: unknown): Promise<T> {
+  if (import.meta.env.DEV) { const demo = await import('./demo'); if (demo.demoRole()) return await demo.demoApi(path) as T }
   if (!configured()) throw new Error('Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in frontend/.env.local to connect Supabase.')
   const access=await token(); const response=await fetch(`${projectUrl}/functions/v1/school-api?path=${encodeURIComponent(path)}`,{method,headers:{apikey:anonKey!,Authorization:`Bearer ${access}`,'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)})
   const data=await response.json(); if(!response.ok) { if(response.status===401) await signOut(); throw Object.assign(new Error(data.error||'The request could not be completed.'),{status:response.status}) } return data as T
