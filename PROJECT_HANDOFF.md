@@ -27,5 +27,8 @@ The schema is in `backend/supabase/migrations/202610290001_school_schema.sql`. T
 - The hosted project has the school-management schema, row-level security, private `school-private` bucket, and both Edge Functions deployed.
 - The hosted demo school is `Demo School` (`demo@example.com`) with a demo admin account.
 - The old published welcome assignment was copied into Supabase. The `Groombridge` school profile, student record, and student account were not migrated; the hosted `Demo School` profile and demo admin were kept. The deleted Django password cannot be used to sign in.
-- The student portal, staff dashboards, admissions, finance, enrolment, attendance, reports, timetable, and private file workflows use Supabase Edge Functions. Guardian-facing UI, live Daraja credentials, and email delivery configuration remain outstanding.
+- The student, guardian, and staff portals are implemented in the frontend. Live Daraja credentials and email delivery configuration remain outstanding.
+- A dedicated administrator area is implemented locally at `/admin`, covering account creation and role changes, school contact details, and the initial-payment policy. The updated `school-api` Edge Function was deployed to this Supabase project on 31 October 2026. A live unauthenticated request to its admin-users route returned HTTP 401.
+- The frontend production build passes locally. An authenticated admin UI check and a non-admin 403 check were not performed because no signed-in session was available in the browser. Frontend hosting was not identified or deployed as part of this update; publish the frontend separately if its host does not build from this repository automatically. New student and guardian identities need their school-domain records and links before those portals work.
+
 

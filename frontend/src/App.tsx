@@ -9,13 +9,15 @@ import { migrateLegacyHash, navigate, usePath } from './router'
 const StudentPortal = lazy(() => import('./student/StudentPortal'))
 const ParentPortal = lazy(() => import('./parent/ParentPortal'))
 const StaffPortal = lazy(() => import('./staff/StaffPortal'))
+const AdminPortal = lazy(() => import('./admin/AdminPortal'))
 migrateLegacyHash()
 
-const home = { student: '/', parent: '/parent', staff: '/staff' } as const
+const home = { student: '/', parent: '/parent', staff: '/staff', admin: '/admin' } as const
 // A signed-in user only sees their own portal; any other path lands on its home.
 function belongs(path: string, role: Who['role']) {
   const inside = (base: string) => path === base || path.startsWith(base + '/')
-  if (role === 'student') return !inside('/parent') && !inside('/staff')
+  if (role === 'student') return !inside('/parent') && !inside('/staff') && !inside('/admin')
+  if (role === 'admin') return inside('/admin')
   return inside(home[role])
 }
 
@@ -34,7 +36,8 @@ export default function App() {
   if (who === undefined) return <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }} role="status" aria-label="Loading"><Logo size={22} animated /></div>
   if (!who) return <>{error && <p className="notice bad" role="alert">{error}</p>}<SignIn onSignedIn={() => void load()} /></>
   const props = { school: school || 'Your school', path, onSignOut: () => void signOut() }
-  return <Suspense fallback={<p className="muted" style={{ padding: 32 }} role="status">Loading…</p>}>
-    {who.role === 'student' ? <StudentPortal {...props} /> : who.role === 'parent' ? <ParentPortal {...props} /> : <StaffPortal {...props} name={who.name} />}
+  return <Suspense fallback={<p className="muted" style={{ padding: 32 }} role="status">Loadingâ€¦</p>}>
+    {who.role === 'student' ? <StudentPortal {...props} /> : who.role === 'parent' ? <ParentPortal {...props} /> : who.role === 'admin' ? <AdminPortal {...props} name={who.name} /> : <StaffPortal {...props} name={who.name} />}
   </Suspense>
 }
+

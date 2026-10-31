@@ -3,9 +3,11 @@
 .env.*
 !.env.example
 !backend/supabase/functions/.env.example
+!frontend/.env.production
 backend/supabase/functions/.env
 backend/supabase/.temp/
 backend/supabase/.branches/
 node_modules/
 dist/
 *.tsbuildinfo
+

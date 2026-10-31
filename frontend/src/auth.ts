@@ -1,6 +1,6 @@
 import { api, signIn, signOut } from './supabase'
 
-export type Role = 'student' | 'parent' | 'staff'
+export type Role = 'student' | 'parent' | 'staff' | 'admin'
 export type Who = { role: Role; name: string }
 export type SignInKind = 'student' | 'staff' | 'parent'
 
@@ -18,9 +18,10 @@ export async function loadSchoolName(): Promise<string> {
 // One sign-in; the portal is then chosen from what the API accepts for this account.
 export async function detectRole(): Promise<Who | null> {
   const unauthorised = (e: unknown) => (e as { status?: number }).status === 401 || (e instanceof Error && e.message.startsWith('Sign in'))
-  try { const s = await api<{ user: { name: string } }>('/api/staff/session/'); return { role: 'staff', name: s.user.name } } catch (e) { if (unauthorised(e)) return null }
+  try { const s = await api<{ user: { name: string; role?: string } }>('/api/staff/session/'); return { role: s.user.role === 'admin' ? 'admin' : 'staff', name: s.user.name } } catch (e) { if (unauthorised(e)) return null }
   try { await api('/api/parent/children/'); return { role: 'parent', name: '' } } catch (e) { if (unauthorised(e)) return null }
   try { const p = await api<{ student: { name: string } }>('/api/student/portal/'); return { role: 'student', name: p.student.name } } catch (e) { if (unauthorised(e)) return null; throw e }
 }
 export const signInWith = (email: string, password: string) => signIn(email, password)
 export const signOutAll = () => signOut()
+
