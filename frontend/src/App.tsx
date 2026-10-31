@@ -1,48 +1,39 @@
-import { useEffect, useState } from 'react'
-import type { FormEvent, ReactNode } from 'react'
-import { loadStudentPortal, signInStudent, signOutStudent, submitStudentAssignment } from './studentApi'
-import type { StudentPortal, Assignment } from './studentApi'
-import AdminApp from './AdminApp'
-import StudentLogin from './StudentLogin'
-import StudentHome from './StudentHome'
-import './App.css'
-import './StudentPortal.css'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
+import SignIn from './SignIn'
+import { detectRole, loadSchoolName, signOutAll } from './auth'
+import type { Who } from './auth'
+import { applySchoolTheme } from './theme'
+import { migrateLegacyHash, navigate, usePath } from './router'
 
-type Page = 'home' | 'learning' | 'timetable' | 'reports' | 'attendance' | 'fees' | 'profile'
-const nav: { id: Page; label: string; icon: string }[] = [{ id:'home',label:'Home',icon:'⌂' },{ id:'learning',label:'Learning',icon:'▤' },{ id:'timetable',label:'Timetable',icon:'▦' },{ id:'reports',label:'Reports',icon:'▧' },{ id:'attendance',label:'Attendance',icon:'✓' },{ id:'fees',label:'Fees',icon:'▱' },{ id:'profile',label:'My profile',icon:'○' }]
-function Card({ title, children }: { title: string; children: ReactNode }) { return <section className="card"><div className="card-heading"><h2>{title}</h2></div>{children}</section> }
-function App() {
-  const [admin, setAdmin] = useState(location.hash.startsWith('#admin-'))
-  const [page, setPage] = useState<Page>((nav.find(x => '#'+x.id === location.hash)?.id ?? 'home') as Page)
-  const [portal, setPortal] = useState<StudentPortal | null>(null)
-  const [error, setError] = useState('')
-  const [loginBusy, setLoginBusy] = useState(false)
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [selected, setSelected] = useState<Assignment | null>(null)
-  const [answer, setAnswer] = useState('')
-  const [refresh, setRefresh] = useState(0)
-  useEffect(() => {
-    const change = () => { setAdmin(location.hash.startsWith('#admin-')); const id = nav.find(x => '#'+x.id === location.hash)?.id; if (id) setPage(id) }
-    addEventListener('hashchange', change); return () => removeEventListener('hashchange', change)
-  }, [])
-  useEffect(() => { let active = true; loadStudentPortal().then(x => { if (active) { setPortal(x); setError('') } }).catch(e => { if (active) { setPortal(null); if ((e as Error & {status?:number}).status !== 401) setError(e instanceof Error ? e.message : 'Could not load your portal.') } }); return () => { active = false } }, [refresh])
-  const money = (value: string | number) => `KSh ${Number(value || 0).toLocaleString('en-KE')}`
-  async function login(e: FormEvent) { e.preventDefault(); setLoginBusy(true); setError(''); try { await signInStudent(username,password); setPassword(''); setRefresh(x => x+1) } catch (e) { setError(e instanceof Error ? e.message : 'Could not sign in.') } finally { setLoginBusy(false) } }
-  async function logout() { await signOutStudent(); setPortal(null); setRefresh(x => x+1); location.hash = '#home' }
-  if (admin) return <AdminApp />
-  if (!portal) return <StudentLogin email={username} password={password} error={error} busy={loginBusy} onEmailChange={setUsername} onPasswordChange={setPassword} onSubmit={login} />
-  const student = portal.student
-  const openPage = (id: Page) => { setPage(id); location.hash = '#'+id }
-  return <div className="app-shell"><aside className="sidebar"><div className="brand"><span className="brand-mark">S</span><div><strong>School portal</strong><span>STUDENT SPACE</span></div></div><nav aria-label="Student navigation">{nav.map(x=><a key={x.id} href={'#'+x.id} aria-current={page===x.id?'page':undefined}><span aria-hidden="true">{x.icon}</span>{x.label}</a>)}</nav><div className="sidebar-footer"><div className="avatar">{student.firstName.slice(0,1)}</div><div><strong>{student.name}</strong><span>{student.level} · {student.stream}</span></div></div></aside><div className="workspace"><header className="topbar"><span>Student portal <span className="breadcrumb">/ {nav.find(x=>x.id===page)?.label}</span></span><a className="staff-switch" style={{marginLeft:'auto'}} href="#admin-dashboard">Staff portal →</a><span className="term">{student.term}</span><button className="logout-button" onClick={()=>void logout()}>Sign out</button></header><main id="main-content"><div className="page-heading"><div><p className="eyebrow">{page==='home'?'YOUR SCHOOL DAY, AT A GLANCE':'YOUR STUDENT SPACE'}</p><h1>{page==='home'?`Welcome back, ${student.firstName}`:nav.find(x=>x.id===page)?.label}</h1><p className="muted">{student.level} · Stream {student.stream} · {student.term}</p></div><span className="sample-date">Today<br/><strong>{new Intl.DateTimeFormat('en-KE',{weekday:'long',day:'numeric',month:'long'}).format(new Date())}</strong></span></div>
-    {page === 'home' && <StudentHome portal={portal} onOpenAssignment={assignment => { setSelected(assignment); openPage('learning') }} onOpenAttendance={() => openPage('attendance')} onOpenReports={() => openPage('reports')} />}
-    
-    {page==='learning' && <div className="learning-grid"><Card title="Your assignments">{portal.assignments.length?portal.assignments.map(x=><button key={x.id} className={'assignment-choice '+(selected?.id===x.id?'selected':'')} onClick={()=>setSelected(x)}><span className="subject-label">{x.subject}</span><strong>{x.title}</strong><small>{x.method==='online'?'Submit online':'Hand in during class'} · {x.submission?'Submitted':'Not submitted'}</small></button>):<p className="muted">No assignments have been published for your class.</p>}</Card>{selected&&<Card title={selected.title}><p className="muted">{selected.subject} · {selected.teacher}</p><p><b>Due:</b> {selected.due?new Date(selected.due).toLocaleString():'No due date'}</p><h3>Instructions</h3><p>{selected.instructions||'No additional instructions.'}</p>{selected.method==='class'?<p className="info-box">Hand this work to your teacher in class.</p>:selected.submission?<div className="info-box"><b>Submitted</b><p>{selected.submission.answer}</p>{selected.submission.feedback&&<p>Teacher: {selected.submission.feedback}</p>}{selected.submission.score&&<p>Score: {selected.submission.score}</p>}</div>:<form onSubmit={async e=>{e.preventDefault();try{await submitStudentAssignment(selected.id,answer);setAnswer('');setSelected(null);setRefresh(x=>x+1)}catch(x){setError(x instanceof Error?x.message:'Submission failed.')}}}><label htmlFor="answer">Your answer</label><textarea id="answer" rows={7} value={answer} onChange={e=>setAnswer(e.target.value)} required/><button className="button">Submit assignment</button>{error&&<p role="alert">{error}</p>}</form>}</Card>}</div>}
-    {page==='timetable'&&<Card title="Weekly timetable">{portal.lessons.length?portal.lessons.map(x=><div className="lesson-row" key={x.id}><span className="lesson-time">{x.weekdayName} · {x.time}</span><div><strong>{x.subject}</strong><p className="muted">{[x.teacher,x.room].filter(Boolean).join(' · ')}</p></div></div>):<p className="muted">Your school has not published a timetable for this class yet.</p>}</Card>}
-    {page==='reports'&&<>{portal.reports.length?portal.reports.map(r=><Card key={r.id} title={r.title}><span className="badge success">{r.status}</span><p className="muted">{r.period} · {r.term}</p><div className="table-wrap"><table><thead><tr><th>Subject</th><th>Marks</th><th>Grade</th><th>Teacher comment</th></tr></thead><tbody>{r.subjects.map(s=><tr key={s.subject}><th>{s.subject}</th><td>{s.mark===null?'Not entered':`${s.mark} / ${s.maximumMark}`}</td><td>{s.grade||'—'}</td><td>{s.teacherComment||'—'}</td></tr>)}</tbody></table></div><p><b>Class teacher:</b> {r.classTeacherComment||'No comment.'}</p>{r.principalComment&&<p><b>Principal:</b> {r.principalComment}</p>}</Card>):<Card title="Reports"><p className="muted">No approved reports have been published yet.</p></Card>}</>}
-    {page==='attendance'&&<><div className="summary-grid"><div className="summary"><span>Days recorded</span><strong>{portal.attendance.summary.daysRecorded}</strong></div><div className="summary"><span>Present</span><strong>{portal.attendance.summary.present}</strong></div><div className="summary"><span>Verified absence</span><strong>{portal.attendance.summary.verifiedAbsence}</strong></div></div><Card title="Attendance record">{portal.attendance.records.length?<div className="table-wrap"><table><thead><tr><th>Date</th><th>Status</th><th>Verification</th><th>Note</th></tr></thead><tbody>{portal.attendance.records.map(x=><tr key={x.date}><td>{new Date(x.date).toLocaleDateString()}</td><td>{x.status}</td><td>{x.verified?'Verified':'Not verified'}</td><td>{x.note||'—'}</td></tr>)}</tbody></table></div>:<p className="muted">No attendance has been recorded for this term.</p>}</Card></>}
-    {page==='fees'&&<><div className="summary-grid"><div className="summary"><span>Total charges</span><strong>{money(portal.fees.summary.totalCharges)}</strong></div><div className="summary"><span>Verified payments</span><strong>{money(portal.fees.summary.verifiedPayments)}</strong></div><div className="summary"><span>Balance</span><strong>{money(portal.fees.summary.balance)}</strong></div></div><Card title="Your statement"><p className="muted">{student.term} · Charges and payments recorded by the accounts office</p>{portal.fees.statement.length?<div className="table-wrap"><table><thead><tr><th>Date</th><th>Description</th><th>Charge</th><th>Payment</th><th>Status</th></tr></thead><tbody>{portal.fees.statement.map((x,i)=><tr key={`${x.date}-${i}`}><td>{x.date||'—'}</td><th>{x.description}</th><td>{x.charge==='0'?'—':money(x.charge)}</td><td>{x.payment==='0'?'—':money(x.payment)}</td><td>{x.status||'—'}</td></tr>)}</tbody></table></div>:<p className="muted">No invoices or payments recorded for this term.</p>}</Card></>}
-    {page==='profile'&&<Card title="Student details"><div className="profile-header"><div className="avatar large">{student.firstName.slice(0,1)}</div><div><h2>{student.name}</h2><p className="muted">{student.admission}</p></div></div><dl className="profile-details"><div><dt>Curriculum</dt><dd>{student.curriculum||'—'}</dd></div><div><dt>Class / year</dt><dd>{student.level}</dd></div><div><dt>Stream</dt><dd>{student.stream||'—'}</dd></div><div><dt>Current term</dt><dd>{student.term||'—'}</dd></div></dl><p className="muted">Ask the school office to correct your student details.</p></Card>}
-    <footer className="page-footer">Your learning. Your progress. One place.</footer></main></div></div>
+const StudentPortal = lazy(() => import('./student/StudentPortal'))
+const ParentPortal = lazy(() => import('./parent/ParentPortal'))
+const StaffPortal = lazy(() => import('./staff/StaffPortal'))
+migrateLegacyHash()
+
+const home = { student: '/', parent: '/parent', staff: '/staff' } as const
+// A signed-in user only sees their own portal; any other path lands on its home.
+function belongs(path: string, role: Who['role']) {
+  const inside = (base: string) => path === base || path.startsWith(base + '/')
+  if (role === 'student') return !inside('/parent') && !inside('/staff')
+  return inside(home[role])
 }
-export default App
+
+export default function App() {
+  const path = usePath()
+  const [who, setWho] = useState<Who | null | undefined>(undefined)
+  const [school, setSchool] = useState('')
+  const [error, setError] = useState('')
+  const load = useCallback(async () => {
+    try { const w = await detectRole(); setWho(w); setError(''); if (w) setSchool(await loadSchoolName()) } catch (e) { setWho(null); setError(e instanceof Error ? e.message : 'Could not load your portal.') }
+  }, [])
+  useEffect(() => { applySchoolTheme(null); void load() }, [load])
+  useEffect(() => { if (who && !belongs(path, who.role)) navigate(home[who.role], true) }, [who, path])
+  const signOut = async () => { await signOutAll(); setWho(null); navigate('/', true) }
+
+  if (who === undefined) return <p className="muted" style={{ padding: 32 }} role="status">Loading…</p>
+  if (!who) return <>{error && <p className="notice bad" role="alert">{error}</p>}<SignIn onSignedIn={() => void load()} /></>
+  const props = { school: school || 'Your school', path, onSignOut: () => void signOut() }
+  return <Suspense fallback={<p className="muted" style={{ padding: 32 }} role="status">Loading…</p>}>
+    {who.role === 'student' ? <StudentPortal {...props} /> : who.role === 'parent' ? <ParentPortal {...props} /> : <StaffPortal {...props} name={who.name} />}
+  </Suspense>
+}
