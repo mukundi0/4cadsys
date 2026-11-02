@@ -122,6 +122,25 @@ Deno.serve(async (req) => {
       const books=await rows('library_books',`?is_published=eq.true&or=(class_level.eq.${enc(student.class_level)},class_level.eq.)&select=id,title,author,subject,class_level,description,file_name,file_size,created_at&order=created_at.desc`)
       return reply({books:books.map((b:any)=>({...b,uploadedAt:b.created_at}))})
     }
+    if(path==='/api/student/library/saved/'&&profile.role==='student'){
+      const student=(await rows('students',`?user_id=eq.${user.id}&select=id`))[0];if(!student)throw new Error('Student profile not found.')
+      if(method==='GET'){
+        const saved=await rows('student_saved_books',`?student_id=eq.${student.id}&select=id,work_key,edition_key,title,author,cover_id,saved_at&order=saved_at.desc`)
+        return reply({books:saved.map((b:any)=>({id:b.id,workKey:b.work_key,editionKey:b.edition_key,title:b.title,author:b.author,coverId:b.cover_id,savedAt:b.saved_at}))})
+      }
+      if(method==='POST'){
+        const workKey=String(body.workKey||''),editionKey=String(body.editionKey||''),action=String(body.action||'save')
+        if(!/^OL\d+W$/.test(workKey)||editionKey&&!/^OL\d+M$/.test(editionKey))throw new Error('Choose a valid Open Library title to save.')
+        if(action==='remove'){
+          await db('student_saved_books',`?student_id=eq.${student.id}&work_key=eq.${enc(workKey)}`,'DELETE',undefined,'return=minimal')
+          return reply({saved:false})
+        }
+        const title=String(body.title||'').trim().slice(0,300);if(!title)throw new Error('Book title is required.')
+        const coverId=Number.isInteger(body.coverId)?body.coverId:null
+        await db('student_saved_books','?on_conflict=student_id,work_key','POST',{student_id:student.id,work_key:workKey,edition_key:editionKey,title,author:String(body.author||'').slice(0,500),cover_id:coverId},'resolution=merge-duplicates,return=representation')
+        return reply({saved:true})
+      }
+    }
     const readBook=path.match(/^\/api\/student\/library\/([^/]+)\/read\/$/)
     if(readBook&&method==='GET'){
       if(profile.role!=='student')throw new Error('Sign in with a student account to read library books.')

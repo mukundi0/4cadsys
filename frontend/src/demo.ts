@@ -55,8 +55,18 @@ const les = (id: string, d: number, s: string, e: string, subject: string, teach
 const ttLessons = WEEK.flatMap((day, d) => day.slice(0, 5).map((s, i) => les(`t${d}${i}`, d, TIMES[i], TIMES[i + 1] ?? '12:20', s, TEACH[s], 'Room 4')))
 const sessions = [{ id: 's1', title: 'Midterm', term: 'Term 3, 2026', period: 'Midterm', class: 'Form 2', stream: 'East', published: false, reports: names.slice(0, 3).map((name, i) => ({ id: `rp${i}`, name, status: 'review', subjects: [{ subject: 'Mathematics', mark: '70' }, { subject: 'English', mark: i ? '65' : null }] })) }]
 
+// Sample library items exist only in the local ?demo= previews. They are never
+// written to Supabase or included in production builds.
+const demoBooks = [
+  { id: 'd0000000-0000-4000-8000-000000000001', title: 'The River and the Source', author: 'Margaret A. Ogola', subject: 'English', class_level: 'Form 2', description: 'A sample class reading resource for the library preview.', file_name: 'river-and-the-source-sample.pdf', file_size: 245760, is_published: true, uploadedAt: '2026-10-28' },
+  { id: 'd0000000-0000-4000-8000-000000000002', title: 'Introduction to Biology', author: 'Demo Department', subject: 'Biology', class_level: 'Form 2', description: 'Sample biology notes for demonstrating the school library.', file_name: 'biology-introduction-sample.pdf', file_size: 524288, is_published: true, uploadedAt: '2026-10-29' },
+  { id: 'd0000000-0000-4000-8000-000000000003', title: 'East African History', author: 'Demo Department', subject: 'History', class_level: '', description: 'A draft sample resource visible to staff only.', file_name: 'east-african-history-sample.pdf', file_size: 393216, is_published: false, uploadedAt: '2026-10-30' },
+]
+const demoSavedBooks: {id:string;workKey:string;editionKey:string;title:string;author:string;coverId:number|null;savedAt:string}[] = []
+const demoReader = (title: string) => `data:text/html;charset=utf-8,${encodeURIComponent(`<!doctype html><meta name="viewport" content="width=device-width"><body style="font:16px/1.6 system-ui;max-width:720px;margin:10vh auto;padding:24px;color:#24352e"><h1>${title}</h1><p>This is a sample reading preview for the demo portal. In a connected school account, this viewer opens the PDF uploaded by staff.</p><h2>Reading note</h2><p>Use the school library to find class resources, read widely, and return to your lessons with questions to discuss.</p><p style="color:#68756e">Demo content · No book file is stored or served.</p></body>`)}`
+
 const nope = (m: string): never => { throw Object.assign(new Error(m), { status: 403 }) }
-export async function demoApi(path: string): Promise<unknown> {
+export async function demoApi(path: string, method = 'GET', body?: unknown): Promise<unknown> {
   const role = demoRole(), url = new URL(path, 'http://x'), p = url.pathname
   if (p === '/api/school/profile/') return { school: { name: 'Demo School' } }
   if (p === '/api/staff/session/') return role === 'staff' ? { user: { name: 'Grace Mwangi' } } : nope('Your account does not have staff access.')
@@ -68,7 +78,27 @@ export async function demoApi(path: string): Promise<unknown> {
   if (p === '/api/staff/admissions/') return { applicants }
   if (p === '/api/staff/finance/') return { payments }
   if (p === '/api/staff/enrolments/') return { enrolments }
-  if (p === '/api/staff/library/' || p === '/api/student/library/') return { books: [] }
+  if (p === '/api/staff/library/' && method === 'POST' && role === 'staff') {
+    const item = body as { title?: string; author?: string; subject?: string; classLevel?: string; description?: string; fileName?: string; fileBase64?: string; publish?: boolean }
+    const book = { id: `d0000000-0000-4000-8000-${String(demoBooks.length + 1).padStart(12, '0')}`, title: item.title || 'Demo upload', author: item.author || '', subject: item.subject || '', class_level: item.classLevel || '', description: item.description || 'Demo upload preview. No file is stored.', file_name: item.fileName || 'sample.pdf', file_size: item.fileBase64?.length || 0, is_published: item.publish === true, uploadedAt: new Date().toISOString().slice(0, 10) }
+    demoBooks.unshift(book)
+    return { id: book.id }
+  }
+  if (p === '/api/staff/library/') return { books: demoBooks }
+  if (p === '/api/student/library/') return { books: demoBooks.filter(book => book.is_published && (!book.class_level || book.class_level === student.level)) }
+  if (p === '/api/student/library/saved/' && role === 'student' && method === 'GET') return { books: demoSavedBooks }
+  if (p === '/api/student/library/saved/' && role === 'student' && method === 'POST') {
+    const item = body as { action?: string; workKey?: string; editionKey?: string; title?: string; author?: string; coverId?: number|null }
+    const index = demoSavedBooks.findIndex(book => book.workKey === item.workKey)
+    if (item.action === 'remove') { if (index >= 0) demoSavedBooks.splice(index, 1); return { saved: false } }
+    if (index >= 0) demoSavedBooks.splice(index, 1)
+    demoSavedBooks.unshift({ id: `demo-${item.workKey}`, workKey: item.workKey||'', editionKey: item.editionKey||'', title: item.title||'', author: item.author||'', coverId: item.coverId||null, savedAt: new Date().toISOString() })
+    return { saved: true }
+  }
+  const readBook = p.match(/^\/api\/student\/library\/([^/]+)\/read\/$/)
+  if (readBook) { const book = demoBooks.find(item => item.id === readBook[1] && item.is_published); return book ? { url: demoReader(book.title) } : nope('Book not found.') }
+  const publishBook = p.match(/^\/api\/staff\/library\/([^/]+)\/publish\/$/)
+  if (publishBook && role === 'staff') { const book = demoBooks.find(item => item.id === publishBook[1]); if (book) book.is_published = !book.is_published; return { published: book?.is_published ?? false } }
   if (p === '/api/staff/attendance/') return { date: '', term: '', students: [...reg('Form 2', 'East'), ...reg('Form 2', 'West'), ...reg('Form 3', 'East')] }
   if (p === '/api/staff/reports/') return { sessions }
   if (p === '/api/staff/timetable/') return { approved: false, lessons: ttLessons }
