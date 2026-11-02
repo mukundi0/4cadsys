@@ -12,6 +12,7 @@ import Reports from './Reports'
 import Timetable from './Timetable'
 import { Assignments, StudentRequests } from './Workflows'
 import Setup from './Setup'
+import Library from './Library'
 
 export type Dashboard = { students: number; applications: number; pendingPayments: number; outstanding: string; attendanceToday: { present: number; absent: number } }
 export type StaffData = { dashboard: Dashboard | null; applicants: Applicant[]; payments: Payment[]; enrolments: Enrolment[] }
@@ -39,8 +40,8 @@ export default function StaffPortal({ school, path, name, onSignOut }: { school:
   const toReview = data.applicants.filter(a => !['accepted', 'declined', 'enrolled'].includes(a.statusCode)).length
   const ready = data.enrolments.filter(e => e.complete && !e.studentCreated).length
   const pending = data.payments.filter(p => p.status === 'pending').length
-  const nav: NavItem[] = [{ path: '/staff', label: 'Overview' }, { path: '/staff/admissions', label: 'Admissions', count: toReview }, { path: '/staff/enrolments', label: 'Enrolments', count: ready }, { path: '/staff/finance', label: 'Finance', count: pending }, { path: '/staff/assignments', label: 'Assignments' }, { path: '/staff/student-requests', label: 'Student requests' }, { path: '/staff/attendance', label: 'Attendance' }, { path: '/staff/reports', label: 'Reports' }, { path: '/staff/timetable', label: 'Timetable' }, { path: '/staff/setup', label: 'School setup' }]
-  const tabs = [nav[0], nav[1], nav[3], nav[4]]
+  const nav: NavItem[] = [{ path: '/staff', label: 'Overview' }, { path: '/staff/admissions', label: 'Admissions', count: toReview }, { path: '/staff/enrolments', label: 'Enrolments', count: ready }, { path: '/staff/finance', label: 'Finance', count: pending }, { path: '/staff/assignments', label: 'Assignments' }, { path: '/staff/library', label: 'Library' }, { path: '/staff/student-requests', label: 'Student requests' }, { path: '/staff/attendance', label: 'Attendance' }, { path: '/staff/reports', label: 'Reports' }, { path: '/staff/timetable', label: 'Timetable' }, { path: '/staff/setup', label: 'School setup' }]
+  const tabs = [nav[0], nav[1], nav[3], nav[4], nav[5]]
   const page = nav.find(n => n.path === path)?.path ?? '/staff'
   return <Shell portal="staff" portalName="School office" school={school} user={{ name, role: 'School staff' }} nav={nav} tabs={tabs} path={page} term={term || undefined} onSignOut={onSignOut}>
     {error && <Notice onDismiss={() => setError('')}>{error}</Notice>}
@@ -49,6 +50,7 @@ export default function StaffPortal({ school, path, name, onSignOut }: { school:
     {page === '/staff/enrolments' && <Enrolments data={data} act={act} busy={busy} />}
     {page === '/staff/finance' && <Finance data={data} act={act} busy={busy} />}
     {page === '/staff/assignments' && <Assignments />}
+    {page === '/staff/library' && <Library />}
     {page === '/staff/student-requests' && <StudentRequests />}
     {termPages.includes(page) && <label className="field" style={{ maxWidth: 260 }}>Term<input value={term} onChange={e => setTerm(e.target.value)} placeholder="e.g. Term 3, 2026" /></label>}
     {page === '/staff/attendance' && <Attendance term={term} onError={setError} />}

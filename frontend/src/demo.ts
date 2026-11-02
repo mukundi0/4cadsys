@@ -68,6 +68,7 @@ export async function demoApi(path: string): Promise<unknown> {
   if (p === '/api/staff/admissions/') return { applicants }
   if (p === '/api/staff/finance/') return { payments }
   if (p === '/api/staff/enrolments/') return { enrolments }
+  if (p === '/api/staff/library/' || p === '/api/student/library/') return { books: [] }
   if (p === '/api/staff/attendance/') return { date: '', term: '', students: [...reg('Form 2', 'East'), ...reg('Form 2', 'West'), ...reg('Form 3', 'East')] }
   if (p === '/api/staff/reports/') return { sessions }
   if (p === '/api/staff/timetable/') return { approved: false, lessons: ttLessons }

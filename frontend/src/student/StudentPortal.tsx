@@ -4,11 +4,12 @@ import Shell from '../Shell'
 import type { NavItem } from '../Shell'
 import { Card, Empty, Notice, PageHead, Pill, Progress, longDate, money, statusTone } from '../ui'
 import { navigate } from '../router'
+import Library from './Library'
 import { loadStudentPortal, submitStudentAssignment, saveStudentAssignment, studentRequest, studentInvoicePayment, openStudentFile } from '../studentApi'
 import type { Assignment, StudentPortal as Portal } from '../studentApi'
 
-const nav: NavItem[] = [{ path: '/', label: 'Home' }, { path: '/learning', label: 'Learning' }, { path: '/timetable', label: 'Timetable' }, { path: '/reports', label: 'Reports' }, { path: '/attendance', label: 'Attendance' }, { path: '/fees', label: 'Fees' }, { path: '/profile', label: 'My profile' }]
-const tabs: NavItem[] = [{ path: '/', label: 'Today' }, { path: '/learning', label: 'Learning' }, { path: '/reports', label: 'Reports' }, { path: '/profile', label: 'More' }]
+const nav: NavItem[] = [{ path: '/', label: 'Home' }, { path: '/learning', label: 'Learning' }, { path: '/library', label: 'Library' }, { path: '/timetable', label: 'Timetable' }, { path: '/reports', label: 'Reports' }, { path: '/attendance', label: 'Attendance' }, { path: '/fees', label: 'Fees' }, { path: '/profile', label: 'My profile' }]
+const tabs: NavItem[] = [{ path: '/', label: 'Today' }, { path: '/learning', label: 'Learning' }, { path: '/library', label: 'Library' }, { path: '/reports', label: 'Reports' }, { path: '/profile', label: 'More' }]
 const monday = (d: Date) => (d.getDay() + 6) % 7
 const dueShort = (iso: string | null) => iso ? new Date(iso).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' }) : 'No due date'
 
@@ -25,6 +26,7 @@ export default function StudentPortal({ school, path, onSignOut }: { school: str
     {error && <Notice onDismiss={() => setError('')}>{error}</Notice>}
     {page === '/' && <Home portal={portal} onOpen={open} />}
     {page === '/learning' && <Learning portal={portal} selectedId={selected} onSelect={setSelected} onSubmitted={() => { setSelected(null); setRefresh(x => x + 1) }} onError={setError} />}
+    {page === '/library' && <Library />}
     {page === '/timetable' && <Timetable portal={portal} />}
     {page === '/reports' && <Reports portal={portal} />}
     {page === '/attendance' && <Attendance portal={portal} />}

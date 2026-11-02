@@ -33,6 +33,9 @@ export type StudentPortal = {
   fees: { summary: { totalCharges: string; verifiedPayments: string; balance: string }; invoices?: {id:string;number:string;term:string;balance:string;status:string}[]; statement: { date: string; description: string; charge: string; payment: string; status?: string; receipt?: string }[] }
   requests?: {id:string;category:string;status:string;message:string;staffResponse:string;createdAt:string}[]
 }
+export type LibraryBook = { id:string; title:string; author:string; subject:string; class_level:string; description:string; file_name:string; file_size:number; uploadedAt:string }
+export async function loadLibraryBooks(){return (await api<{books:LibraryBook[]}>('/api/student/library/')).books}
+export async function readLibraryBook(id:string){return api<{url:string}>(`/api/student/library/${id}/read/`)}
 
 export async function loadStudentProfile(): Promise<StudentRecord> {
   const data = await api<{ student: StudentRecord }>('/api/student/profile/')
