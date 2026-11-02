@@ -1,3 +1,25 @@
+[api]
+port = 55321
+
+[db]
+# The default 5432x ports fall inside a Windows reserved range here.
+port = 55322
+
+[studio]
+port = 55323
+
+[inbucket]
+port = 55324
+
+[analytics]
+port = 55327
+
+[vector]
+port = 55328
+
+[db.pooler]
+port = 55329
+
 [functions.school-api]
 verify_jwt = false
 

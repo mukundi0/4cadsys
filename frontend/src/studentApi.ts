@@ -19,7 +19,9 @@ export type Assignment = {
   method: 'online' | 'class'
   lateAllowed: boolean
   instructions: string
-  submission: { status: string; answer: string; feedback: string; score: string | null; submittedAt: string } | null
+  maximumScore: string
+  draft: { answer: string; attachmentName: string | null; updatedAt: string } | null
+  submission: { id: string; status: string; answer: string; attachmentName: string | null; feedback: string; score: string | null; submittedAt: string } | null
 }
 export type StudentPortal = {
   student: StudentRecord
@@ -27,8 +29,9 @@ export type StudentPortal = {
   lessons: { id: string; weekday: number; weekdayName: string; time: string; subject: string; teacher: string; room: string }[]
   announcements: { id: string; title: string; body: string; category: string; publishedAt: string }[]
   reports: { id: string; title: string; term: string; period: string; status: string; classTeacherComment: string; principalComment: string; subjects: { subject: string; mark: string | null; maximumMark: string; grade: string; teacherComment: string }[] }[]
-  attendance: { summary: { daysRecorded: number; present: number; verifiedAbsence: number }; records: { date: string; status: string; verified: boolean; note: string }[] }
-  fees: { summary: { totalCharges: string; verifiedPayments: string; balance: string }; statement: { date: string; description: string; charge: string; payment: string; status?: string; receipt?: string }[] }
+  attendance: { summary: { daysRecorded: number; present: number; verifiedAbsence: number }; records: { id:string; date: string; status: string; verified: boolean; note: string }[] }
+  fees: { summary: { totalCharges: string; verifiedPayments: string; balance: string }; invoices?: {id:string;number:string;term:string;balance:string;status:string}[]; statement: { date: string; description: string; charge: string; payment: string; status?: string; receipt?: string }[] }
+  requests?: {id:string;category:string;status:string;message:string;staffResponse:string;createdAt:string}[]
 }
 
 export async function loadStudentProfile(): Promise<StudentRecord> {
@@ -45,8 +48,21 @@ export async function loadStudentPortal(): Promise<StudentPortal> {
   return api<StudentPortal>('/api/student/portal/')
 }
 
-export async function submitStudentAssignment(id: string, answer: string) {
-  return api<{ submission: NonNullable<Assignment['submission']> }>(`/api/student/assignments/${id}/submit/`, 'POST', { answer })
+export async function saveStudentAssignment(id: string, answer: string, fileBase64?: string, fileName?: string) {
+  return api(`/api/student/assignments/${id}/submit/`, 'POST', { action:'draft', answer, fileBase64, fileName })
+}
+export async function submitStudentAssignment(id: string, answer: string, fileBase64?: string, fileName?: string) {
+  return api<{ submission: NonNullable<Assignment['submission']> }>(`/api/student/assignments/${id}/submit/`, 'POST', { action:'submit', answer, fileBase64, fileName })
+}
+export async function studentRequest(body: unknown) {
+  return api('/api/student/requests/', 'POST', body)
+}
+export async function openStudentFile(kind: 'submission'|'draft'|'payment', id: string) {
+  const path = kind==='submission' ? `/api/private/files/submission/${id}/` : kind==='draft'?`/api/private/files/draft/${id}/`:`/api/private/files/payment/${id}/`
+  const data=await api<{url:string}>(path); window.open(data.url,'_blank','noopener,noreferrer')
+}
+export async function studentInvoicePayment(id:string,body:unknown,proof=false) {
+  return api(`/api/student/invoices/${id}/${proof?'proof':'stk-push'}/`,'POST',body)
 }
 
 export async function signInStudent(username: string, password: string): Promise<void> {
