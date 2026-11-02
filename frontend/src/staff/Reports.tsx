@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
 import { staffRequest } from '../staffApi'
 import { Card, Empty, PageHead, Pill, Progress } from '../ui'
 import type { Tone } from '../ui'
@@ -19,6 +20,7 @@ function sessionState(s: Session): [string, Tone] {
 export default function Reports({ term, onError }: { term: string; onError: (m: string) => void }) {
   const [sessions, setSessions] = useState<Session[] | null>(null)
   const [busy, setBusy] = useState('')
+  const [creating,setCreating]=useState(false)
   const load = useCallback(() => staffRequest<{ sessions: Session[] }>('/api/staff/reports/').then(r => setSessions(r.sessions)).catch(e => onError(e instanceof Error ? e.message : 'Could not load reports.')), [onError])
   useEffect(() => { void load() }, [load])
   async function publish(s: Session) {
@@ -32,6 +34,7 @@ export default function Reports({ term, onError }: { term: string; onError: (m: 
   const missing = (sessions ?? []).filter(s => !s.published).flatMap(s => s.reports.flatMap(r => r.subjects.filter(x => x.mark === null).map(x => `${s.class} ${s.stream} · ${r.name} · ${x.subject}`)))
   return <>
     <PageHead eyebrow={term || undefined} title="Reports" sub="Subject teacher → Class teacher → Principal" />
+    <Card title="Start a report session"><form className="row wrap" onSubmit={async(e:FormEvent<HTMLFormElement>)=>{e.preventDefault();const form=e.currentTarget,f=new FormData(form);setCreating(true);try{await staffRequest('/api/staff/reports/create/','POST',{title:f.get('title'),term:f.get('term'),period:f.get('period'),class:f.get('class'),stream:f.get('stream')});await load();form.reset()}catch(x){onError(x instanceof Error?x.message:'Could not create report session.')}finally{setCreating(false)}}}><label className="field">Title<input name="title" required placeholder="Term 3 report" /></label><label className="field">Term<input name="term" required defaultValue={term} /></label><label className="field">Period<input name="period" required placeholder="July–September 2026" /></label><label className="field">Class<input name="class" required placeholder="Grade 6" /></label><label className="field">Stream<input name="stream" placeholder="Optional" /></label><button className="btn" disabled={creating}>Create session</button></form></Card>
     <Card className="flush">{sessions?.length ? <div className="table-wrap"><table style={{ ['--tw' as string]: '860px' }}><thead><tr><th>Stream</th><th>Marks collected</th><th>Status</th><th>Action</th></tr></thead><tbody>{sessions.map(s => {
       const cells = s.reports.flatMap(r => r.subjects), got = cells.filter(c => c.mark !== null).length, [label, tone] = sessionState(s)
       return <tr key={s.id}><th scope="row"><div className="cell"><b>{s.class} {s.stream}</b><span>{s.title} · {s.period}</span></div></th><td style={{ minWidth: 180 }}><Progress value={cells.length ? got / cells.length * 100 : 0} /><span className="mono muted" style={{ fontSize: 12 }}>{got} / {cells.length}</span></td><td><Pill tone={tone}>{label}</Pill></td>
