@@ -1,4 +1,4 @@
-# 4cadsys
+﻿# 4cadsys
 
 A school management portal built with React, TypeScript, Supabase Auth, Postgres, Storage, and Edge Functions.
 
@@ -24,7 +24,7 @@ A school management portal built with React, TypeScript, Supabase Auth, Postgres
    supabase --workdir backend functions deploy daraja-callback --no-verify-jwt
    ```
 
-   Supabase injects its server-side API secrets into Edge Functions. Never put a secret key in a `VITE_` variable or browser code. Configure optional Daraja/email secrets with `supabase --workdir backend secrets set MPESA_CONSUMER_KEY=... MPESA_CONSUMER_SECRET=... MPESA_SHORTCODE=... MPESA_PASSKEY=... DARAJA_CALLBACK_SECRET=... MPESA_CALLBACK_URL=... RESEND_API_KEY=...`.
+   Supabase injects its server-side API secrets into Edge Functions. Never put a secret key in a `VITE_` variable or browser code. Before deploying `school-api`, set `CORS_ALLOWED_ORIGINS` to the exact frontend origin(s), comma-separated. The local default allows only localhost. Configure optional Daraja/email secrets with `supabase --workdir backend secrets set MPESA_CONSUMER_KEY=... MPESA_CONSUMER_SECRET=... MPESA_SHORTCODE=... MPESA_PASSKEY=... DARAJA_CALLBACK_SECRET=... MPESA_CALLBACK_URL=... RESEND_API_KEY=...`.
 
 5. Create school users in Supabase Auth. The migration trigger creates a `profiles` row for each account; update its role in the Supabase Dashboard's Table Editor. Add each student's `students` row or each guardian's `guardians` row and guardian links. Staff roles must be assigned only by a trusted project owner.
 
@@ -42,7 +42,7 @@ The student portal, staff dashboard, admissions and document review, finance ver
 
 Administrator accounts use a dedicated `/admin` area for account creation, role changes, suspending/reactivating accounts, school contact details, and the initial-payment policy. The endpoints require the `admin` profile role and enforce role and account-status changes on the server. Newly created identities receive a profile; student and guardian accounts still need their corresponding school records and links before those portals can be used. Account suspension uses the `is_active` field added by `202610310001_profile_account_status.sql` and blocks API calls even while an existing access token is still valid.
 
-The Supabase migration and both Edge Functions are deployed to the configured project. The hosted database has 31 public tables with RLS enabled on every table, the `school-private` bucket is private, and all nine business RPCs are restricted to the server role. The deployed functions are active; unauthenticated access is rejected, and a demo admin sign-in was verified against the live API. Create student, guardian, and staff Supabase Auth accounts and matching profile/domain rows as needed. The parent portal is implemented in `frontend/src/parent/ParentPortal.tsx`; it supports linked-child selection, published reports, assignments, timetable, fee statements and payment submission. M-Pesa requires Daraja credentials and callback configuration; email delivery requires a Resend key.
+The database migrations and Edge Functions are defined in this repository but still need deployment to the Supabase project. Complete authenticated role checks against a live project before school use. The parent portal is implemented in `frontend/src/parent/ParentPortal.tsx`; it supports linked-child selection, published reports, assignments, timetable, fee statements and payment submission. M-Pesa requires Daraja credentials and callback configuration; email delivery requires a Resend key.
 
 ## Local configuration and data
 
